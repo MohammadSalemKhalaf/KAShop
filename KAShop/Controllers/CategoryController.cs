@@ -1,10 +1,11 @@
 ﻿using API_Task1.Data;
-using KAShop.DTO;
 using KAShop.DTO.Request;
-using KAShop.Model;
+using KAShop.DTO.Responses;
+using KAShop.Model.Category;
 using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
 namespace KAShop.Controllers
@@ -21,21 +22,24 @@ namespace KAShop.Controllers
             _localizer = localizer;
         }
 
-        // ✅ Get All
         [HttpGet("all")]
         public IActionResult GetAll()
         {
             try
             {
-                var cat = context.Categories.ToList();
-                var catDTO = cat.Adapt<List<CategoryResponseDTO>>();
-                if(!cat.Any())
+                var cat = context.Categories
+                                 .Include(c => c.Translations)
+                                 .ToList();
+
+                if (!cat.Any())
                 {
                     return NotFound(new
                     {
                         message = _localizer["NoCategories"].Value
                     });
                 }
+
+                var catDTO = cat.Adapt<List<CategoryResponseDTO>>();
                 return Ok(new
                 {
                     message = _localizer["GetAllCategoriesDone"].Value,
@@ -51,13 +55,15 @@ namespace KAShop.Controllers
             }
         }
 
-        // ✅ Get By Id
         [HttpGet("{id}")]
-        public IActionResult GetCategoryById(int id)
+        public IActionResult GetCategoryById([FromRoute] int id)
         {
             try
             {
-                var cat = context.Categories.Find(id);
+                var cat = context.Categories
+                                 .Include(c => c.Translations)
+                                 .FirstOrDefault(c => c.Id == id);
+
                 if (cat == null)
                 {
                     return NotFound(new
@@ -82,20 +88,30 @@ namespace KAShop.Controllers
             }
         }
 
-        // ✅ Create
         [HttpPost]
-        public IActionResult Create(CategoryRequestDTO request)
+        public IActionResult Create([FromBody] CategoryRequestDTO request)
         {
             try
             {
-                var categoryDb = request.Adapt<Category>();
+                var categoryDb = new Category
+                {
+                    Status = KAShop.Model.Status.Active,
+                    CreatedDate = DateTime.Now,
+                    Translations = request.CategoryTranslations.Select(t => new CategoryTranslation
+                    {
+                        Name = t.Name,
+                        Language = t.Language
+                    }).ToList()
+                };
+
                 context.Categories.Add(categoryDb);
                 context.SaveChanges();
 
+                var catDTO = categoryDb.Adapt<CategoryResponseDTO>();
                 return Ok(new
                 {
                     message = _localizer["CreateCategoryDone"].Value,
-                    category = categoryDb
+                    category = catDTO
                 });
             }
             catch (Exception ex)
@@ -107,13 +123,15 @@ namespace KAShop.Controllers
             }
         }
 
-        // ✅ Delete
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public IActionResult Delete([FromRoute] int id)
         {
             try
             {
-                var cat = context.Categories.Find(id);
+                var cat = context.Categories
+                                 .Include(c => c.Translations)
+                                 .FirstOrDefault(c => c.Id == id);
+
                 if (cat == null)
                 {
                     return NotFound(new
@@ -139,13 +157,15 @@ namespace KAShop.Controllers
             }
         }
 
-        // ✅ Update
         [HttpPatch("{id}")]
-        public IActionResult Update(int id, CategoryRequestDTO request)
+        public IActionResult Update([FromRoute] int id, [FromBody] CategoryRequestDTO request)
         {
             try
             {
-                var cat = context.Categories.Find(id);
+                var cat = context.Categories
+                                 .Include(c => c.Translations)
+                                 .FirstOrDefault(c => c.Id == id);
+
                 if (cat == null)
                 {
                     return NotFound(new
@@ -154,13 +174,21 @@ namespace KAShop.Controllers
                     });
                 }
 
-                request.Adapt(cat);
+                cat.Translations.Clear();
+                cat.Translations = request.CategoryTranslations.Select(t => new CategoryTranslation
+                {
+                    Name = t.Name,
+                    Language = t.Language,
+                    CategoryId = cat.Id
+                }).ToList();
+
                 context.SaveChanges();
 
+                var catDTO = cat.Adapt<CategoryResponseDTO>();
                 return Ok(new
                 {
                     message = _localizer["UpdateCategoryDone"].Value,
-                    category = cat
+                    category = catDTO
                 });
             }
             catch (Exception ex)
@@ -172,13 +200,15 @@ namespace KAShop.Controllers
             }
         }
 
-        // ✅ Remove All
         [HttpDelete("all")]
         public IActionResult RemoveAll()
         {
             try
             {
-                var cat = context.Categories.ToList();
+                var cat = context.Categories
+                                 .Include(c => c.Translations)
+                                 .ToList();
+
                 if (!cat.Any())
                 {
                     return NotFound(new
