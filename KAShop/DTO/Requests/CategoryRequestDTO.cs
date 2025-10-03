@@ -1,7 +1,9 @@
-﻿namespace KAShop.DTO.Request
+﻿using KAShop.DTO.Requests;
+
+namespace KAShop.DTO.Request
 {
     public class CategoryRequestDTO
     {
-        public string Name { get; set; }
+        public List<CategoryTranslationRequest> CategoryTranslations { get; set; }
     }
 }

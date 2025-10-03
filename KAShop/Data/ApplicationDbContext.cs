@@ -1,4 +1,4 @@
-﻿using KAShop.Model;
+﻿using KAShop.Model.Category;
 using Microsoft.EntityFrameworkCore;
 namespace API_Task1.Data
 {
@@ -6,6 +6,7 @@ namespace API_Task1.Data
     {
         //public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<CategoryTranslation> CategoryTranslations { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
