@@ -1,5 +1,7 @@
 
+using API_Task1.Data;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Globalization;
 
@@ -19,6 +21,11 @@ namespace KAShop
     new CultureInfo(defaultCulture),
     new CultureInfo("ar")
 };
+
+            //
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration["ConnectionString:DefaultConnection"]));
+            //
 
             builder.Services.Configure<RequestLocalizationOptions>(options => {
                 options.DefaultRequestCulture = new RequestCulture(defaultCulture);

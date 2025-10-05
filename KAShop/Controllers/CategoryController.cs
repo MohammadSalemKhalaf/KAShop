@@ -14,12 +14,12 @@ namespace KAShop.Controllers
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        private readonly ApplicationDbContext context = new ApplicationDbContext();
+        private readonly ApplicationDbContext context;
         private readonly IStringLocalizer<SharedResource> _localizer;
-
-        public CategoryController(IStringLocalizer<SharedResource> localizer)
+        public CategoryController(IStringLocalizer<SharedResource> localizer , ApplicationDbContext context)
         {
             _localizer = localizer;
+            this.context = context;
         }
         [HttpGet("all")]
         public IActionResult GetAll([FromQuery] string lang = "en")
