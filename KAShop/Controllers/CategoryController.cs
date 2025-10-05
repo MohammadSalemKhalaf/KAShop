@@ -14,16 +14,15 @@ namespace KAShop.Controllers
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        private readonly ApplicationDbContext context = new ApplicationDbContext();
+        private readonly ApplicationDbContext context;
         private readonly IStringLocalizer<SharedResource> _localizer;
-
-        public CategoryController(IStringLocalizer<SharedResource> localizer)
+        public CategoryController(IStringLocalizer<SharedResource> localizer , ApplicationDbContext context)
         {
             _localizer = localizer;
+            this.context = context;
         }
-
         [HttpGet("all")]
-        public IActionResult GetAll()
+        public IActionResult GetAll([FromQuery] string lang = "en")
         {
             try
             {
@@ -39,11 +38,18 @@ namespace KAShop.Controllers
                     });
                 }
 
-                var catDTO = cat.Adapt<List<CategoryResponseDTO>>();
+                var result = cat.Select(c => new
+                {
+                    Id = c.Id,
+                    Name = c.Translations.FirstOrDefault(t => t.Language == lang)?.Name
+                           ?? c.Translations.FirstOrDefault(t => t.Language == "en")?.Name
+                           ?? string.Empty
+                });
+
                 return Ok(new
                 {
                     message = _localizer["GetAllCategoriesDone"].Value,
-                    cats = catDTO
+                    cats = result
                 });
             }
             catch (Exception ex)
@@ -54,6 +60,7 @@ namespace KAShop.Controllers
                 });
             }
         }
+
 
         [HttpGet("{id}")]
         public IActionResult GetCategoryById([FromRoute] int id)
